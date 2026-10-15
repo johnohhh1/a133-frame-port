@@ -1,0 +1,51 @@
+Subject: [PATCH v2 0/2] sunxi: Add A100 syscon nodes
+From: Cody Eksal <masterr3c0rd@epochal.quest>
+Date: Wed, 18 Dec 2024 09:01:17 -0400
+Message-Id: <20241218-a100-syscon-v2-0-dae60b9ce192@epochal.quest>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Hello! Here is a V2 of
+https://msgid.link/20241202-a100-syscon-v1-0-86c6524f24d7@epochal.quest.
+Only changes here are fixing missing newlines between child nodes and
+rebasing on 6.13-rc3.
+
+***
+
+Here are some very small patches to add syscon nodes to the A100's
+device tree. These had not been added yet, as they hadn't been needed up
+to this point. However, Parthiban and I have been working on patch
+series in parallel that require either the syscon or the SRAM nodes it
+is responsible for; specifically my patches add support for the A100's
+ethernet controller, while Parthiban has been working hard on bringing
+up the Display Engine.
+
+Thanks as always!
+- Cody
+
+Signed-off-by: Cody Eksal <masterr3c0rd@epochal.quest>
+---
+Changes in v2:
+- Add missing empty newlines between syscon child nodes
+- Rebase on v6.13-rc3
+- Link to v1: https://lore.kernel.org/r/20241202-a100-syscon-v1-0-86c6524f24d7@epochal.quest
+
+---
+Cody Eksal (2):
+      dt-bindings: sram: sunxi-sram: Add A100 compatible
+      arm64: dts: allwinner: a100: Add syscon nodes
+
+ .../sram/allwinner,sun4i-a10-system-control.yaml   |  4 ++-
+ arch/arm64/boot/dts/allwinner/sun50i-a100.dtsi     | 33 ++++++++++++++++++++++
+ 2 files changed, 36 insertions(+), 1 deletion(-)
+---
+base-commit: 78d4f34e2115b517bcbfe7ec0d018bbbb6f9b0b8
+change-id: 20241126-a100-syscon-7316bea62e42
+
+Best regards,
+-- 
+Cody Eksal <masterr3c0rd@epochal.quest>
+
+
+

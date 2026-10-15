@@ -1,0 +1,862 @@
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 1/22] dt-bindings: iommu: sun50i: remove resets from
+ required property
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:50 +0530
+Message-Id: <20241227-a133-display-support-v1-1-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+iommu in a133/a100 does not have reset control. remove it
+from required property to make it optional.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ Documentation/devicetree/bindings/iommu/allwinner,sun50i-h6-iommu.yaml | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/iommu/allwinner,sun50i-h6-iommu.yaml b/Documentation/devicetree/bindings/iommu/allwinner,sun50i-h6-iommu.yaml
+index a8409db4a3e3..03176f68485b 100644
+--- a/Documentation/devicetree/bindings/iommu/allwinner,sun50i-h6-iommu.yaml
++++ b/Documentation/devicetree/bindings/iommu/allwinner,sun50i-h6-iommu.yaml
+@@ -42,7 +42,6 @@ required:
+   - reg
+   - interrupts
+   - clocks
+-  - resets
+ 
+ additionalProperties: false
+ 
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 2/22] dt-bindings: display: sunxi: Add a100/a133 display
+ engine compatibles
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:51 +0530
+Message-Id: <20241227-a133-display-support-v1-2-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+A100/A133 comes with display enginer 2.0 with 1 x Mixer with write
+back support and 1 tcon top. Mixer can be used with lcd/lvds/dsi,
+but shares the same GPIO bank.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ .../display/allwinner,sun4i-a10-display-engine.yaml     |  2 ++
+ .../display/allwinner,sun8i-a83t-de2-mixer.yaml         |  1 +
+ .../bindings/display/allwinner,sun8i-r40-tcon-top.yaml  | 17 +++++++++++++++++
+ 3 files changed, 20 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-display-engine.yaml b/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-display-engine.yaml
+index e6088f379f70..dc47c684fcb0 100644
+--- a/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-display-engine.yaml
++++ b/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-display-engine.yaml
+@@ -64,6 +64,7 @@ properties:
+       - allwinner,sun9i-a80-display-engine
+       - allwinner,sun20i-d1-display-engine
+       - allwinner,sun50i-a64-display-engine
++      - allwinner,sun50i-a100-display-engine
+       - allwinner,sun50i-h6-display-engine
+ 
+   allwinner,pipelines:
+@@ -96,6 +97,7 @@ if:
+           - allwinner,sun9i-a80-display-engine
+           - allwinner,sun20i-d1-display-engine
+           - allwinner,sun50i-a64-display-engine
++          - allwinner,sun50i-a100-display-engine
+ 
+ then:
+   properties:
+diff --git a/Documentation/devicetree/bindings/display/allwinner,sun8i-a83t-de2-mixer.yaml b/Documentation/devicetree/bindings/display/allwinner,sun8i-a83t-de2-mixer.yaml
+index b75c1ec686ad..ebcddca2efb3 100644
+--- a/Documentation/devicetree/bindings/display/allwinner,sun8i-a83t-de2-mixer.yaml
++++ b/Documentation/devicetree/bindings/display/allwinner,sun8i-a83t-de2-mixer.yaml
+@@ -23,6 +23,7 @@ properties:
+       - allwinner,sun20i-d1-de2-mixer-1
+       - allwinner,sun50i-a64-de2-mixer-0
+       - allwinner,sun50i-a64-de2-mixer-1
++      - allwinner,sun50i-a100-de2-mixer-0
+       - allwinner,sun50i-h6-de3-mixer-0
+ 
+   reg:
+diff --git a/Documentation/devicetree/bindings/display/allwinner,sun8i-r40-tcon-top.yaml b/Documentation/devicetree/bindings/display/allwinner,sun8i-r40-tcon-top.yaml
+index 7d849c4095a3..9b14b7fb2d2f 100644
+--- a/Documentation/devicetree/bindings/display/allwinner,sun8i-r40-tcon-top.yaml
++++ b/Documentation/devicetree/bindings/display/allwinner,sun8i-r40-tcon-top.yaml
+@@ -42,6 +42,7 @@ properties:
+     enum:
+       - allwinner,sun8i-r40-tcon-top
+       - allwinner,sun20i-d1-tcon-top
++      - allwinner,sun50i-a100-tcon-top
+       - allwinner,sun50i-h6-tcon-top
+ 
+   reg:
+@@ -179,6 +180,22 @@ allOf:
+             - description: TCON TV0 output clock name
+             - description: DSI output clock name
+ 
++  - if:
++      properties:
++        compatible:
++          contains:
++            const: allwinner,sun50i-a100-tcon-top
++
++    then:
++      properties:
++        clocks:
++          items:
++            - description: The TCON TOP interface clock
++
++        clock-names:
++          items:
++            - const: bus
++
+   - if:
+       properties:
+         compatible:
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 3/22] dt-bindings: clock: sun8i de2 clock: Add PLL com
+ clock
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:52 +0530
+Message-Id: <20241227-a133-display-support-v1-3-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Some platforms like A100/A133 also uses pll-com clock as additional
+clock source for the display clock. This is not documents both in
+user manual and DE 2.0 specification. These changes are mainly from
+vendor BSP.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ .../devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml         | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml b/Documentation/devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml
+index 70369bd633e4..3e00905b66ca 100644
+--- a/Documentation/devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml
++++ b/Documentation/devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml
+@@ -39,11 +39,13 @@ properties:
+     items:
+       - description: Bus Clock
+       - description: Module Clock
++      - description: PLL common clock
+ 
+   clock-names:
+     items:
+       - const: bus
+       - const: mod
++      - const: pll-com
+ 
+   resets:
+     maxItems: 1
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 4/22] dt-bindings: clock: sun8i de2 clock: Add a100/a133
+ compatible
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:53 +0530
+Message-Id: <20241227-a133-display-support-v1-4-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+A100/A133 uses one mixer without rotation support, which is same
+as sun8i v3s. Add it with fallback to v3s compatible.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ .../devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml       | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml b/Documentation/devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml
+index 3e00905b66ca..ed038967929b 100644
+--- a/Documentation/devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml
++++ b/Documentation/devicetree/bindings/clock/allwinner,sun8i-a83t-de2-clk.yaml
+@@ -23,6 +23,7 @@ properties:
+       - const: allwinner,sun8i-h3-de2-clk
+       - const: allwinner,sun8i-v3s-de2-clk
+       - const: allwinner,sun50i-a64-de2-clk
++      - const: allwinner,sun50i-a100-de2-clk
+       - const: allwinner,sun50i-h5-de2-clk
+       - const: allwinner,sun50i-h6-de3-clk
+       - items:
+@@ -31,6 +32,9 @@ properties:
+       - items:
+           - const: allwinner,sun20i-d1-de2-clk
+           - const: allwinner,sun50i-h5-de2-clk
++      - items:
++          - const: allwinner,sun50i-a100-de2-clk
++          - const: allwinner,sun8i-v3s-de2-clk
+ 
+   reg:
+     maxItems: 1
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 5/22] dt-bindings: display: sun4i: add phy property
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:54 +0530
+Message-Id: <20241227-a133-display-support-v1-5-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+lvds in A100/A133 platform uses phy from DSI block, which needs
+to be handled in phy driver. Add phy property to tcon with
+generic name 'phy'.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ .../devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml       | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml b/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml
+index 724d93b9193b..6d8ae781c230 100644
+--- a/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml
++++ b/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml
+@@ -115,6 +115,12 @@ properties:
+           - const: edp
+           - const: lvds
+ 
++  phys:
++    maxItems: 1
++
++  phy-names:
++    const: phy
++
+   ports:
+     $ref: /schemas/graph.yaml#/properties/ports
+ 
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 6/22] dt-bindings: display: sun4i: add a100/a133 tcon lcd
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:55 +0530
+Message-Id: <20241227-a133-display-support-v1-6-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+A100/A133 has one 18 bit LCD / 2 x LVDS / 1 x DSI. All the controller
+shares the same GPIO D block, where LVDS controller can co-exits.
+
+Although 2 LVDS controller is available, there is no document details
+for the second. Add compatible for a100 lcd controller.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml b/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml
+index 6d8ae781c230..7ea45a0a2073 100644
+--- a/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml
++++ b/Documentation/devicetree/bindings/display/allwinner,sun4i-a10-tcon.yaml
+@@ -35,6 +35,7 @@ properties:
+       - const: allwinner,sun9i-a80-tcon-tv
+       - const: allwinner,sun20i-d1-tcon-lcd
+       - const: allwinner,sun20i-d1-tcon-tv
++      - const: allwinner,sun50i-a100-tcon-lcd
+ 
+       - items:
+           - enum:
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 7/22] dt-bindings: vendor-prefixes: Shenzhen Baijie
+ Technology
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:56 +0530
+Message-Id: <20241227-a133-display-support-v1-7-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Add entry for Shenzhen Baijie Technology (https://szbaijie.com)
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ Documentation/devicetree/bindings/vendor-prefixes.yaml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Documentation/devicetree/bindings/vendor-prefixes.yaml
+index da01616802c7..81cbc8b6b195 100644
+--- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
++++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
+@@ -1466,6 +1466,8 @@ patternProperties:
+   "^synopsys,.*":
+     description: Synopsys, Inc. (deprecated, use snps)
+     deprecated: true
++  "^szbaijie,.*":
++    description: Shenzhen Baijie Technology Co., Ltd.
+   "^tbs,.*":
+     description: TBS Technologies
+   "^tbs-biometrics,.*":
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 8/22] dt-bindings: arm: sunxi: document Szbaijie A133
+ helper board
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:57 +0530
+Message-Id: <20241227-a133-display-support-v1-8-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Szbaijie Baijie Technology A133 helper board is an evaluation
+board of their A133-Core SoM. Add its compatible (with the
+SoM compatible) to the sunxi board DT binding file.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ Documentation/devicetree/bindings/arm/sunxi.yaml | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/arm/sunxi.yaml b/Documentation/devicetree/bindings/arm/sunxi.yaml
+index 046536d02706..eb19f8b1fe68 100644
+--- a/Documentation/devicetree/bindings/arm/sunxi.yaml
++++ b/Documentation/devicetree/bindings/arm/sunxi.yaml
+@@ -891,6 +891,12 @@ properties:
+           - const: allwinner,sl631
+           - const: allwinner,sun8i-v3
+ 
++      - description: Szbaijie A133 Helper board
++        items:
++          - const: szbaijie,helper-a133
++          - const: szbaijie,helper-a133-core
++          - const: allwinner,sun50i-a133
++
+       - description: Tanix TX1
+         items:
+           - const: oranth,tanix-tx1
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 9/22] iommu: sun50i: make reset control optional
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:58 +0530
+Message-Id: <20241227-a133-display-support-v1-9-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+A133/A100 SoC doesn't have reset control from the CCU. Get reset
+control line optionally.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+Reviewed-by: Paul Kocialkowski <paulk@sys-base.io>
+Acked-by: Joerg Roedel <jroedel@suse.de>
+---
+ drivers/iommu/sun50i-iommu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/iommu/sun50i-iommu.c b/drivers/iommu/sun50i-iommu.c
+index 8d8f11854676..2ba804d682dc 100644
+--- a/drivers/iommu/sun50i-iommu.c
++++ b/drivers/iommu/sun50i-iommu.c
+@@ -1030,7 +1030,7 @@ static int sun50i_iommu_probe(struct platform_device *pdev)
+ 		goto err_free_cache;
+ 	}
+ 
+-	iommu->reset = devm_reset_control_get(&pdev->dev, NULL);
++	iommu->reset = devm_reset_control_get_optional(&pdev->dev, NULL);
+ 	if (IS_ERR(iommu->reset)) {
+ 		dev_err(&pdev->dev, "Couldn't get our reset line.\n");
+ 		ret = PTR_ERR(iommu->reset);
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 10/22] pinctrl: sunxi: add missed lvds pins for a100/a133
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:30:59 +0530
+Message-Id: <20241227-a133-display-support-v1-10-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+lvds, lcd, dsi all shares the same GPIO D bank and lvds0
+data 3 lines and lvds1 pins are missed, add them.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+Reviewed-by: Andre Przywara <andre.przywara@arm.com>
+---
+ drivers/pinctrl/sunxi/pinctrl-sun50i-a100.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/pinctrl/sunxi/pinctrl-sun50i-a100.c b/drivers/pinctrl/sunxi/pinctrl-sun50i-a100.c
+index df90c75fb3c5..b97de80ae2f3 100644
+--- a/drivers/pinctrl/sunxi/pinctrl-sun50i-a100.c
++++ b/drivers/pinctrl/sunxi/pinctrl-sun50i-a100.c
+@@ -256,72 +256,84 @@ static const struct sunxi_desc_pin a100_pins[] = {
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D12 */
++		  SUNXI_FUNCTION(0x3, "lvds0"),		/* D3P */
+ 		  SUNXI_FUNCTION(0x4, "dsi0"),		/* DP3 */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 8)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 9),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D13 */
++		  SUNXI_FUNCTION(0x3, "lvds0"),		/* D3N */
+ 		  SUNXI_FUNCTION(0x4, "dsi0"),		/* DM3 */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 9)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 10),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D14 */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* D0P */
+ 		  SUNXI_FUNCTION(0x4, "spi1"),		/* CS */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 10)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 11),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D15 */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* D0N */
+ 		  SUNXI_FUNCTION(0x4, "spi1"),		/* CLK */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 11)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 12),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D18 */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* D1P */
+ 		  SUNXI_FUNCTION(0x4, "spi1"),		/* MOSI */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 12)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 13),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D19 */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* D1N */
+ 		  SUNXI_FUNCTION(0x4, "spi1"),		/* MISO */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 13)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 14),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D20 */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* D2P */
+ 		  SUNXI_FUNCTION(0x4, "uart3"),		/* TX */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 14)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 15),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D21 */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* D2N */
+ 		  SUNXI_FUNCTION(0x4, "uart3"),		/* RX */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 15)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 16),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D22 */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* CKP */
+ 		  SUNXI_FUNCTION(0x4, "uart3"),		/* RTS */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 16)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 17),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D23 */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* CKN */
+ 		  SUNXI_FUNCTION(0x4, "uart3"),		/* CTS */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 17)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 18),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* CLK */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* D3P */
+ 		  SUNXI_FUNCTION(0x4, "uart4"),		/* TX */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 18)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 19),
+ 		  SUNXI_FUNCTION(0x0, "gpio_in"),
+ 		  SUNXI_FUNCTION(0x1, "gpio_out"),
+ 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* DE */
++		  SUNXI_FUNCTION(0x3, "lvds1"),		/* D3N */
+ 		  SUNXI_FUNCTION(0x4, "uart4"),		/* RX */
+ 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 19)),
+ 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 20),
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 11/22] drm/sun4i: Add support for a100/a133 display engine
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:31:00 +0530
+Message-Id: <20241227-a133-display-support-v1-11-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Display Engine(DE2) in Allwinner A100/A133 has one mixers and tcon.
+The routing for mixer0 is through tcon0 and connected to
+LVDS/RGB/MIPI-DSI controller.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ drivers/gpu/drm/sun4i/sun4i_drv.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/sun4i/sun4i_drv.c b/drivers/gpu/drm/sun4i/sun4i_drv.c
+index 5eccf58f2e17..e012a6316bba 100644
+--- a/drivers/gpu/drm/sun4i/sun4i_drv.c
++++ b/drivers/gpu/drm/sun4i/sun4i_drv.c
+@@ -436,6 +436,7 @@ static const struct of_device_id sun4i_drv_of_table[] = {
+ 	{ .compatible = "allwinner,sun9i-a80-display-engine" },
+ 	{ .compatible = "allwinner,sun20i-d1-display-engine" },
+ 	{ .compatible = "allwinner,sun50i-a64-display-engine" },
++	{ .compatible = "allwinner,sun50i-a100-display-engine" },
+ 	{ .compatible = "allwinner,sun50i-h6-display-engine" },
+ 	{ }
+ };
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 12/22] drm/sun4i: Add support for a100/a133 mixer
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:31:01 +0530
+Message-Id: <20241227-a133-display-support-v1-12-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Mixers in Allwinner A100/A133 have similar capabilities as others
+SoCs with DE2. Add support for them.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ drivers/gpu/drm/sun4i/sun8i_mixer.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/gpu/drm/sun4i/sun8i_mixer.c b/drivers/gpu/drm/sun4i/sun8i_mixer.c
+index 8b41d33baa30..0a1fccb87d5d 100644
+--- a/drivers/gpu/drm/sun4i/sun8i_mixer.c
++++ b/drivers/gpu/drm/sun4i/sun8i_mixer.c
+@@ -714,6 +714,15 @@ static const struct sun8i_mixer_cfg sun50i_a64_mixer1_cfg = {
+ 	.vi_num		= 1,
+ };
+ 
++static const struct sun8i_mixer_cfg sun50i_a100_mixer0_cfg = {
++	.ccsc		= CCSC_MIXER0_LAYOUT,
++	.mod_rate	= 300000000,
++	.scaler_mask	= 0xf,
++	.scanline_yuv	= 2560,
++	.ui_num		= 2,
++	.vi_num		= 2,
++};
++
+ static const struct sun8i_mixer_cfg sun50i_h6_mixer0_cfg = {
+ 	.ccsc		= CCSC_MIXER0_LAYOUT,
+ 	.is_de3		= true,
+@@ -765,6 +774,10 @@ static const struct of_device_id sun8i_mixer_of_table[] = {
+ 		.compatible = "allwinner,sun50i-a64-de2-mixer-1",
+ 		.data = &sun50i_a64_mixer1_cfg,
+ 	},
++	{
++		.compatible = "allwinner,sun50i-a100-de2-mixer-0",
++		.data = &sun50i_a100_mixer0_cfg,
++	},
+ 	{
+ 		.compatible = "allwinner,sun50i-h6-de3-mixer-0",
+ 		.data = &sun50i_h6_mixer0_cfg,
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 13/22] drm/sun4i: make tcon top tv0 optional
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:31:02 +0530
+Message-Id: <20241227-a133-display-support-v1-13-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+current implementation of tcon top assumes tv0 is always present, which
+isn't case in A100/A133 SoC's. Make tv0 optional by introducing another
+control similar to tv1 and make existing users with true/present.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ drivers/gpu/drm/sun4i/sun8i_tcon_top.c | 34 ++++++++++++++++++++--------------
+ 1 file changed, 20 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/gpu/drm/sun4i/sun8i_tcon_top.c b/drivers/gpu/drm/sun4i/sun8i_tcon_top.c
+index 8adda578c51b..bd9d0840ead7 100644
+--- a/drivers/gpu/drm/sun4i/sun8i_tcon_top.c
++++ b/drivers/gpu/drm/sun4i/sun8i_tcon_top.c
+@@ -16,6 +16,7 @@
+ #include "sun8i_tcon_top.h"
+ 
+ struct sun8i_tcon_top_quirks {
++	bool has_tcon_tv0;
+ 	bool has_tcon_tv1;
+ 	bool has_dsi;
+ };
+@@ -191,10 +192,11 @@ static int sun8i_tcon_top_bind(struct device *dev, struct device *master,
+ 	 * to TVE clock parent.
+ 	 */
+ 	i = 0;
+-	clk_data->hws[CLK_TCON_TOP_TV0] =
+-		sun8i_tcon_top_register_gate(dev, "tcon-tv0", regs,
+-					     &tcon_top->reg_lock,
+-					     TCON_TOP_TCON_TV0_GATE, i++);
++	if (quirks->has_tcon_tv0)
++		clk_data->hws[CLK_TCON_TOP_TV0] =
++			sun8i_tcon_top_register_gate(dev, "tcon-tv0", regs,
++						     &tcon_top->reg_lock,
++						     TCON_TOP_TCON_TV0_GATE, i++);
+ 
+ 	if (quirks->has_tcon_tv1)
+ 		clk_data->hws[CLK_TCON_TOP_TV1] =
+@@ -208,16 +210,18 @@ static int sun8i_tcon_top_bind(struct device *dev, struct device *master,
+ 						     &tcon_top->reg_lock,
+ 						     TCON_TOP_TCON_DSI_GATE, i++);
+ 
+-	for (i = 0; i < CLK_NUM; i++)
+-		if (IS_ERR(clk_data->hws[i])) {
+-			ret = PTR_ERR(clk_data->hws[i]);
+-			goto err_unregister_gates;
+-		}
++	if (i) {
++		for (i = 0; i < CLK_NUM; i++)
++			if (IS_ERR(clk_data->hws[i])) {
++				ret = PTR_ERR(clk_data->hws[i]);
++				goto err_unregister_gates;
++			}
+ 
+-	ret = of_clk_add_hw_provider(dev->of_node, of_clk_hw_onecell_get,
+-				     clk_data);
+-	if (ret)
+-		goto err_unregister_gates;
++		ret = of_clk_add_hw_provider(dev->of_node, of_clk_hw_onecell_get,
++				clk_data);
++		if (ret)
++			goto err_unregister_gates;
++	}
+ 
+ 	dev_set_drvdata(dev, tcon_top);
+ 
+@@ -266,16 +270,18 @@ static void sun8i_tcon_top_remove(struct platform_device *pdev)
+ }
+ 
+ static const struct sun8i_tcon_top_quirks sun8i_r40_tcon_top_quirks = {
++	.has_tcon_tv0	= true,
+ 	.has_tcon_tv1	= true,
+ 	.has_dsi	= true,
+ };
+ 
+ static const struct sun8i_tcon_top_quirks sun20i_d1_tcon_top_quirks = {
++	.has_tcon_tv0	= true,
+ 	.has_dsi	= true,
+ };
+ 
+ static const struct sun8i_tcon_top_quirks sun50i_h6_tcon_top_quirks = {
+-	/* Nothing special */
++	.has_tcon_tv0	= true,
+ };
+ 
+ /* sun4i_drv uses this list to check if a device node is a TCON TOP */
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 14/22] drm/sun4i: add a100/a133 tcon top quirks
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:31:03 +0530
+Message-Id: <20241227-a133-display-support-v1-14-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+A100/A133 comes with 2 x LVDS, 1 x DSI without TV support. Add
+quirks with tv0 disabled. DSI support is not added.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ drivers/gpu/drm/sun4i/sun8i_tcon_top.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/gpu/drm/sun4i/sun8i_tcon_top.c b/drivers/gpu/drm/sun4i/sun8i_tcon_top.c
+index bd9d0840ead7..a777b30ecea0 100644
+--- a/drivers/gpu/drm/sun4i/sun8i_tcon_top.c
++++ b/drivers/gpu/drm/sun4i/sun8i_tcon_top.c
+@@ -280,6 +280,10 @@ static const struct sun8i_tcon_top_quirks sun20i_d1_tcon_top_quirks = {
+ 	.has_dsi	= true,
+ };
+ 
++static const struct sun8i_tcon_top_quirks sun50i_a100_tcon_top_quirks = {
++	/* TODO DSI support */
++};
++
+ static const struct sun8i_tcon_top_quirks sun50i_h6_tcon_top_quirks = {
+ 	.has_tcon_tv0	= true,
+ };
+@@ -294,6 +298,10 @@ const struct of_device_id sun8i_tcon_top_of_table[] = {
+ 		.compatible = "allwinner,sun20i-d1-tcon-top",
+ 		.data = &sun20i_d1_tcon_top_quirks
+ 	},
++	{
++		.compatible = "allwinner,sun50i-a100-tcon-top",
++		.data = &sun50i_a100_tcon_top_quirks
++	},
+ 	{
+ 		.compatible = "allwinner,sun50i-h6-tcon-top",
+ 		.data = &sun50i_h6_tcon_top_quirks
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 15/22] clk: sunxi-ng: sun8i-de2: add pll-com clock support
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:31:04 +0530
+Message-Id: <20241227-a133-display-support-v1-15-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+add optional pll-com support which is available in some platforms
+like A100/A133, which is used by the display clock. There is no
+documentation reference or details in DE 2.0 specification.
+
+But these changes are needed to get the display clock to work and
+this is inherited from the vendor BSP.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ drivers/clk/sunxi-ng/ccu-sun8i-de2.c | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/clk/sunxi-ng/ccu-sun8i-de2.c b/drivers/clk/sunxi-ng/ccu-sun8i-de2.c
+index f2aa71206bc2..3e28c32050e0 100644
+--- a/drivers/clk/sunxi-ng/ccu-sun8i-de2.c
++++ b/drivers/clk/sunxi-ng/ccu-sun8i-de2.c
+@@ -241,7 +241,7 @@ static const struct sunxi_ccu_desc sun50i_h5_de2_clk_desc = {
+ 
+ static int sunxi_de2_clk_probe(struct platform_device *pdev)
+ {
+-	struct clk *bus_clk, *mod_clk;
++	struct clk *bus_clk, *mod_clk, *pll_clk;
+ 	struct reset_control *rstc;
+ 	void __iomem *reg;
+ 	const struct sunxi_ccu_desc *ccu_desc;
+@@ -265,6 +265,11 @@ static int sunxi_de2_clk_probe(struct platform_device *pdev)
+ 		return dev_err_probe(&pdev->dev, PTR_ERR(mod_clk),
+ 				     "Couldn't get mod clk\n");
+ 
++	pll_clk = devm_clk_get_optional(&pdev->dev, "pll-com");
++	if (IS_ERR(pll_clk))
++		return dev_err_probe(&pdev->dev, PTR_ERR(pll_clk),
++				     "Couldn't get pll clk\n");
++
+ 	rstc = devm_reset_control_get_exclusive(&pdev->dev, NULL);
+ 	if (IS_ERR(rstc))
+ 		return dev_err_probe(&pdev->dev, PTR_ERR(rstc),
+@@ -283,12 +288,20 @@ static int sunxi_de2_clk_probe(struct platform_device *pdev)
+ 		goto err_disable_bus_clk;
+ 	}
+ 
++	if (pll_clk) {
++		ret = clk_prepare_enable(pll_clk);
++		if (ret) {
++			dev_err(&pdev->dev, "Couldn't enable pll clk: %d\n", ret);
++			goto err_disable_mod_clk;
++		}
++	}
++
+ 	/* The reset control needs to be asserted for the controls to work */
+ 	ret = reset_control_deassert(rstc);
+ 	if (ret) {
+ 		dev_err(&pdev->dev,
+ 			"Couldn't deassert reset control: %d\n", ret);
+-		goto err_disable_mod_clk;
++		goto err_disable_pll_clk;
+ 	}
+ 
+ 	ret = devm_sunxi_ccu_probe(&pdev->dev, reg, ccu_desc);
+@@ -299,6 +312,8 @@ static int sunxi_de2_clk_probe(struct platform_device *pdev)
+ 
+ err_assert_reset:
+ 	reset_control_assert(rstc);
++err_disable_pll_clk:
++	clk_disable_unprepare(pll_clk);
+ err_disable_mod_clk:
+ 	clk_disable_unprepare(mod_clk);
+ err_disable_bus_clk:
+
+-- 
+2.39.5
+
+From git@z Thu Jan  1 00:00:00 1970
+Subject: [PATCH 16/22] clk: sunxi-ng: sun8i-de2: Add support for a100/a133
+From: Parthiban Nallathambi <parthiban@linumiz.com>
+Date: Fri, 27 Dec 2024 18:31:05 +0530
+Message-Id: <20241227-a133-display-support-v1-16-abad35b3579c@linumiz.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Display clock uses 1 mixer without rotation support is same
+as v3s. There is also a hidden independent display engine
+with independent tcon_top available in A100/A133 bin (based
+on vendor BSP).
+
+Add new compatible for A100/A133 to accommodate the future changes
+for the independent DE.
+
+Signed-off-by: Parthiban Nallathambi <parthiban@linumiz.com>
+---
+ drivers/clk/sunxi-ng/ccu-sun8i-de2.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/clk/sunxi-ng/ccu-sun8i-de2.c b/drivers/clk/sunxi-ng/ccu-sun8i-de2.c
+index 3e28c32050e0..067820ab704d 100644
+--- a/drivers/clk/sunxi-ng/ccu-sun8i-de2.c
++++ b/drivers/clk/sunxi-ng/ccu-sun8i-de2.c
+@@ -342,6 +342,10 @@ static const struct of_device_id sunxi_de2_clk_ids[] = {
+ 		.compatible = "allwinner,sun50i-a64-de2-clk",
+ 		.data = &sun50i_a64_de2_clk_desc,
+ 	},
++	{
++		.compatible = "allwinner,sun50i-a100-de2-clk",
++		.data = &sun8i_v3s_de2_clk_desc,
++	},
+ 	{
+ 		.compatible = "allwinner,sun50i-h5-de2-clk",
+ 		.data = &sun50i_h5_de2_clk_desc,
+
+-- 
+2.39.5
+

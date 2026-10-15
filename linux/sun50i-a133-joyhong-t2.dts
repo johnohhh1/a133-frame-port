@@ -1,0 +1,305 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Joyhong T-2 / ceres-aw Allwinner A133 digital frame.
+ *
+ * First-pass mainline-style DTS reconstructed from the factory Android
+ * Linux 4.9 live device tree captured on 2026-08-10.
+ *
+ * This intentionally starts from the public mainline Liontron H-A133L shape:
+ * A133 currently reuses sun50i-a100.dtsi in mainline. The panel node below
+ * uses modern panel-lvds bindings, but full display output still depends on
+ * A100/A133 display engine, TCON/LVDS, and PWM nodes being present in the
+ * target kernel tree.
+ */
+
+/dts-v1/;
+
+#include "sun50i-a100.dtsi"
+#include "sun50i-a100-cpu-opp.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/ {
+	model = "Joyhong T-2 A133 Digital Frame";
+	compatible = "joyhong,t2-a133", "allwinner,sun50i-a100";
+
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+
+		/*
+		 * Android bootargs expose:
+		 *   disp_reserve=8294400,0xbbf4c080
+		 *
+		 * 8294400 bytes is exactly 1920 * 1080 * 4. If a prior
+		 * bootloader/kernel leaves the display engine and LVDS pipeline
+		 * running, this gives mainline Linux a simplefb console path.
+		 */
+		framebuffer0: framebuffer@bbf4c080 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0xbbf4c080 0x0 0x7e9000>;
+			width = <1920>;
+			height = <1080>;
+			stride = <7680>;
+			format = "x8r8g8b8";
+			status = "okay";
+		};
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		framebuffer@bbf4c080 {
+			reg = <0x0 0xbbf4c080 0x0 0x7e9000>;
+			no-map;
+		};
+	};
+
+	reg_vcc5v: regulator-vcc5v {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc-5v";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		regulator-always-on;
+	};
+
+	reg_lcd_logic: regulator-lcd-logic {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc-lcd-logic";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		vin-supply = <&reg_eldo1>;
+		enable-active-high;
+		gpio = <&pio 1 1 GPIO_ACTIVE_HIGH>; /* PB1, factory lcd_gpio_0 */
+	};
+
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pwm 0 20000 0>; /* factory lcd_pwm_ch=0, 50 kHz */
+		brightness-levels = <0 16 32 64 96 128 160 192 224 255>;
+		default-brightness-level = <9>;
+		enable-gpios = <&pio 1 8 GPIO_ACTIVE_HIGH>; /* PB8, factory lcd_bl_en */
+		power-supply = <&reg_dc1sw>;
+	};
+
+	panel: panel {
+		compatible = "panel-lvds";
+		width-mm = <260>;
+		height-mm = <478>;
+		backlight = <&backlight>;
+		power-supply = <&reg_lcd_logic>;
+
+		/*
+		 * Factory LVDS fields:
+		 *   lcd_lvds_if         = 1: dual-link LVDS, not data mapping
+		 *   lcd_lvds_colordepth = 0: 8-bit / 24 bpp
+		 *   lcd_lvds_mode       = 0: NS/VESA-style mapping
+		 *
+		 * If colors are swapped or washed out, try "jeida-24".
+		 */
+		data-mapping = "vesa-24";
+
+		panel-timing {
+			clock-frequency = <135000000>;
+			hactive = <1920>;
+			vactive = <1080>;
+
+			/*
+			 * Factory provided totals, not front porch:
+			 *   lcd_hfp = lcd_ht - lcd_x - lcd_hbp - lcd_hspw
+			 *           = 2108 - 1920 - 140 - 48 = 0
+			 *   lcd_vfp = lcd_vt - lcd_y - lcd_vbp - lcd_vspw
+			 *           = 1132 - 1080 - 41 - 10 = 1
+			 */
+			hback-porch = <140>;
+			hfront-porch = <0>;
+			hsync-len = <48>;
+			vback-porch = <41>;
+			vfront-porch = <1>;
+			vsync-len = <10>;
+
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <1>;
+			pixelclk-active = <0>;
+		};
+
+		port {
+			panel_in: endpoint {
+				/*
+				 * Connect this to the A133 LVDS/TCON endpoint once
+				 * the target kernel tree has those display nodes.
+				 */
+			};
+		};
+	};
+};
+
+&cpu0 {
+	cpu-supply = <&reg_dcdc2>;
+};
+
+&ehci0 {
+	status = "okay";
+};
+
+&ehci1 {
+	status = "okay";
+};
+
+&mmc0 {
+	vmmc-supply = <&reg_dcdc1>;
+	vqmmc-supply = <&reg_dcdc1>;
+	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>; /* PF6 */
+	bus-width = <4>;
+	status = "okay";
+};
+
+&mmc1 {
+	bus-width = <4>;
+	non-removable;
+	keep-power-in-suspend;
+	cap-sdio-irq;
+	status = "okay";
+};
+
+&mmc2 {
+	vmmc-supply = <&reg_dcdc1>;
+	vqmmc-supply = <&reg_eldo1>;
+	cap-mmc-hw-reset;
+	non-removable;
+	bus-width = <8>;
+	mmc-ddr-1_8v;
+	mmc-hs200-1_8v;
+	status = "okay";
+};
+
+&ohci0 {
+	status = "okay";
+};
+
+&ohci1 {
+	status = "okay";
+};
+
+&pio {
+	vcc-pb-supply = <&reg_dcdc1>;
+	vcc-pc-supply = <&reg_eldo1>;
+	vcc-pd-supply = <&reg_eldo1>;
+	vcc-pf-supply = <&reg_dcdc1>;
+	vcc-pg-supply = <&reg_dcdc1>;
+	vcc-ph-supply = <&reg_dcdc1>;
+	vcc-pj-supply = <&reg_eldo1>;
+};
+
+&r_i2c0 {
+	status = "okay";
+
+	axp803: pmic@34 {
+		compatible = "x-powers,axp803";
+		reg = <0x34>;
+		interrupt-parent = <&r_intc>;
+		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+#include "axp803.dtsi"
+
+&ac_power_supply {
+	status = "okay";
+};
+
+&reg_aldo1 {
+	regulator-always-on;
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	regulator-name = "vcc-codec-avcc";
+};
+
+&reg_aldo2 {
+	regulator-always-on;
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	regulator-name = "vcc-dram-1";
+};
+
+&reg_aldo3 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-usb-pl";
+};
+
+&reg_dc1sw {
+	regulator-name = "vcc-lcd";
+};
+
+&reg_dcdc1 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-io-usb-pd-emmc";
+};
+
+&reg_dcdc2 {
+	regulator-always-on;
+	regulator-min-microvolt = <810000>;
+	regulator-max-microvolt = <1200000>;
+	regulator-name = "vdd-cpux";
+};
+
+&reg_dcdc3 {
+	regulator-always-on;
+	regulator-min-microvolt = <900000>;
+	regulator-max-microvolt = <900000>;
+	regulator-name = "vdd-usb-cpus";
+};
+
+&reg_dcdc4 {
+	regulator-always-on;
+	regulator-min-microvolt = <950000>;
+	regulator-max-microvolt = <950000>;
+	regulator-name = "vdd-sys";
+};
+
+&reg_dcdc5 {
+	regulator-always-on;
+	regulator-min-microvolt = <1100000>;
+	regulator-max-microvolt = <1100000>;
+	regulator-name = "vcc-dram";
+};
+
+&reg_eldo1 {
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	regulator-name = "vcc-pc-pd-pj-emmc-lvds";
+};
+
+&reg_fldo1 {
+	regulator-always-on;
+	regulator-min-microvolt = <900000>;
+	regulator-max-microvolt = <900000>;
+	regulator-name = "vdd-cpus-usb";
+};
+
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pb_pins>;
+	status = "okay";
+};
+
+&usb_otg {
+	dr_mode = "peripheral";
+	status = "okay";
+};
+
+&usbphy {
+	usb1_vbus-supply = <&reg_vcc5v>;
+	status = "okay";
+};
